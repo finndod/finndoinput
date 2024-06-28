@@ -31,13 +31,13 @@
             const entry = document.createElement('div');
             entry.className = 'entry';
             entry.innerHTML = `
-                <label for="coordinates">Coordinates:</label>
-                <input type="text" name="coordinates" required placeholder="coordinates"><br><br>
+                <label for="coordinates">koordinater fra google maps:</label>
+                <input type="text" name="coordinates" required placeholder="lim inn"><br><br>
 
-                <label for="description">Description:</label>
-                <textarea name="description" required></textarea><br><br>
+                <label for="description">Informasjon:</label>
+                <textarea name="description" required placeholder="Navn, adresse, hvor mange doer, kvalitet"></textarea><br><br>
 
-                <label for="image">Image:</label>
+                <label for="image">Bilder:</label>
                 <input type="file" name="image" accept="image/*" required><br><br>
             `;
             document.getElementById('entries').appendChild(entry);
@@ -55,8 +55,9 @@
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
-                const [lat, lon] = coordinates.split(',').map(coord => coord.trim());
-                const swappedCoordinates = `${lon}, ${lat}`;
+                const cleanedCoordinates = coordinates.replace(/[()]/g, ''); // Remove parentheses
+                const [lat, lon] = cleanedCoordinates.split(',').map(coord => coord.trim());
+                const swappedCoordinates = `[${lon}, ${lat}]`;
 
                 const description = entry.querySelector('textarea[name="description"]').value;
                 const imageFile = entry.querySelector('input[name="image"]').files[0];
