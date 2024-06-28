@@ -55,6 +55,8 @@
             const maxYOffset = 270; // Maximum Y offset before adding a new page (adjust as needed)
             const pageWidth = doc.internal.pageSize.getWidth(); // Get page width
             const imageMargin = 10; // Margin between images
+            const maxImageHeight = 60; // Maximum height for images
+            const availableWidth = pageWidth - 20; // Available width on the page (considering margins)
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
@@ -82,22 +84,17 @@
                     const file = imageFiles[i];
                     const { width, height } = await getImageDimensions(file);
                     const aspectRatio = width / height;
-                    const maxWidth = (pageWidth - 40) / 2; // Maximum width for each image to fit side by side
-                    const maxHeight = 60; // Maximum height for images
 
-                    let imgWidth, imgHeight;
+                    let imgWidth = maxImageHeight * aspectRatio;
+                    let imgHeight = maxImageHeight;
 
-                    if (aspectRatio > 1) {
-                        // Landscape
-                        imgWidth = maxWidth;
+                    // Ensure images fit within the available page width
+                    if (imgWidth > availableWidth / 2) {
+                        imgWidth = availableWidth / 2;
                         imgHeight = imgWidth / aspectRatio;
-                    } else {
-                        // Portrait
-                        imgHeight = maxHeight;
-                        imgWidth = imgHeight * aspectRatio;
                     }
 
-                    if (xOffset + imgWidth > pageWidth - 10) {
+                    if (xOffset + imgWidth > availableWidth) {
                         xOffset = 10;
                         yOffset += imgHeight + imageMargin;
                     }
@@ -113,7 +110,7 @@
                     xOffset += imgWidth + imageMargin;
                 }
 
-                yOffset += 20; // Adjust yOffset to add space between entries
+                yOffset += maxImageHeight + 20; // Adjust yOffset to add space between entries
             }
 
             doc.save('document.pdf');
