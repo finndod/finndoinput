@@ -75,23 +75,20 @@
                 yOffset += 20;
 
                 let xOffset = 10; // X offset for the first image
+                const imageHeight = 60; // Height for all images
+                const imageMargin = 10; // Margin between images
+                const maxImageWidth = 90; // Maximum width for each image to fit side by side
 
                 for (let i = 0; i < imageFiles.length; i++) {
                     const file = imageFiles[i];
                     const { width, height } = await getImageDimensions(file);
                     const aspectRatio = width / height;
-                    const maxWidth = 90; // Maximum width for side-by-side images
-                    const maxHeight = 90; // Maximum height for side-by-side images
+                    const imgHeight = imageHeight;
+                    const imgWidth = Math.min(maxImageWidth, imgHeight * aspectRatio);
 
-                    let imgWidth = maxWidth;
-                    let imgHeight = maxHeight;
-
-                    if (aspectRatio > 1) {
-                        // Landscape
-                        imgHeight = maxWidth / aspectRatio;
-                    } else {
-                        // Portrait
-                        imgWidth = maxHeight * aspectRatio;
+                    if (xOffset + imgWidth > 200) {
+                        xOffset = 10;
+                        yOffset += imgHeight + imageMargin;
                     }
 
                     if (yOffset + imgHeight > maxYOffset) {
@@ -99,19 +96,13 @@
                         yOffset = 10;
                         xOffset = 10;
                     }
-                    
+
                     doc.addImage(await readFileAsDataURL(file), 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
 
-                    // Update xOffset for the next image, or reset it and update yOffset if it was the second image
-                    if (xOffset === 10) {
-                        xOffset = 110; // Next image goes to the right
-                    } else {
-                        xOffset = 10; // Reset to the left
-                        yOffset += imgHeight + 10; // Move down for the next row of images
-                    }
+                    xOffset += imgWidth + imageMargin;
                 }
 
-                yOffset += 20; // Add space between entries
+                yOffset += imageHeight + 20; // Adjust yOffset to account for image height and add space between entries
             }
 
             doc.save('document.pdf');
