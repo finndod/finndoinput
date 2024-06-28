@@ -4,25 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Generator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.0.0/docx.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <h1>Input Data to Generate DOCX</h1>
+    <h1>Dofinner</h1>
+    *maks 5 doer og last ned eller risikerer du at mister informasjon*
     <form id="docForm">
         <div id="entries">
             <div class="entry">
-                <label for="coordinates">Coordinates:</label>
-                <input type="text" name="coordinates" required><br><br>
+                <label for="coordinates">koordinater fra google maps:</label>
+                <input type="text" name="coordinates" required placeholder="lim inn"><br><br>
 
-                <label for="description">Description:</label>
-                <textarea name="description" required></textarea><br><br>
+                <label for="description">Informasjon:</label>
+                <textarea name="description" required placeholder="Navn, adresse, hvor mange doer, kvalitet"></textarea><br><br>
 
-                <label for="image">Image:</label>
+                <label for="image">Bilder:</label>
                 <input type="file" name="image" accept="image/*" required><br><br>
             </div>
         </div>
-        <button type="button" onclick="addEntry()">Add Another Entry</button><br><br>
-        <button type="submit">Generate DOCX</button>
+        <button type="button" onclick="addEntry()">LEGG TIL FLERE DOER</button><br><br>
+        <button type="submit">last ned pdf</button>
     </form>
 
     <script>
@@ -31,7 +32,7 @@
             entry.className = 'entry';
             entry.innerHTML = `
                 <label for="coordinates">Coordinates:</label>
-                <input type="text" name="coordinates" required><br><br>
+                <input type="text" name="coordinates" required placeholder="coordinates"><br><br>
 
                 <label for="description">Description:</label>
                 <textarea name="description" required></textarea><br><br>
@@ -45,47 +46,44 @@
         document.getElementById('docForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
             const entries = document.getElementsByClassName('entry');
-            const doc = new docx.Document();
+
+            let yOffset = 10; // Y offset for PDF content
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
+                const [lat, lon] = coordinates.split(',').map(coord => coord.trim());
+                const swappedCoordinates = `${lon}, ${lat}`;
+
                 const description = entry.querySelector('textarea[name="description"]').value;
                 const imageFile = entry.querySelector('input[name="image"]').files[0];
 
-                doc.addSection({
-                    children: [
-                        new docx.Paragraph(`Coordinates: ${coordinates}`),
-                        new docx.Paragraph(`Description: ${description}`),
-                        new docx.Paragraph('Image:'),
-                        await createImageParagraph(imageFile),
-                    ],
-                });
+                doc.text(`Coordinates: ${swappedCoordinates}`, 10, yOffset);
+                yOffset += 10;
+                doc.text(`Description: ${description}`, 10, yOffset);
+                yOffset += 20;
+
+                if (imageFile) {
+                    const imageDataUrl = await readFileAsDataURL(imageFile);
+                    doc.addImage(imageDataUrl, 'JPEG', 10, yOffset, 50, 50);
+                    yOffset += 60; // Adjust yOffset to account for image height
+                }
+
+                yOffset += 20; // Add space between entries
             }
 
-            docx.Packer.toBlob(doc).then(blob => {
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'document.docx';
-                link.click();
-            });
+            doc.save('document.pdf');
         });
 
-        async function createImageParagraph(file) {
-            const reader = new FileReader();
+        function readFileAsDataURL(file) {
             return new Promise((resolve, reject) => {
-                reader.onload = function(event) {
-                    const image = new docx.ImageRun({
-                        data: event.target.result,
-                        transformation: { width: 100, height: 100 }
-                    });
-
-                    resolve(new docx.Paragraph({
-                        children: [image],
-                    }));
-                };
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
                 reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
+                reader.readAsDataURL(file);
             });
         }
     </script>
