@@ -56,7 +56,7 @@
             const pageWidth = doc.internal.pageSize.getWidth(); // Get page width
             const imageMargin = 10; // Margin between images
             const maxImageHeight = 60; // Maximum height for images
-            const availableWidth = pageWidth - 20; // Available width on the page (considering margins)
+            const maxImageWidth = (pageWidth - 40) / 2; // Maximum width for each image to fit side by side
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
@@ -85,16 +85,18 @@
                     const { width, height } = await getImageDimensions(file);
                     const aspectRatio = width / height;
 
-                    let imgWidth = maxImageHeight * aspectRatio;
+                    let imgWidth = maxImageWidth;
                     let imgHeight = maxImageHeight;
 
-                    // Ensure images fit within the available page width
-                    if (imgWidth > availableWidth / 2) {
-                        imgWidth = availableWidth / 2;
+                    if (aspectRatio > 1) {
+                        // Landscape
                         imgHeight = imgWidth / aspectRatio;
+                    } else {
+                        // Portrait
+                        imgWidth = imgHeight * aspectRatio;
                     }
 
-                    if (xOffset + imgWidth > availableWidth) {
+                    if (xOffset + imgWidth > pageWidth - 10) {
                         xOffset = 10;
                         yOffset += imgHeight + imageMargin;
                     }
