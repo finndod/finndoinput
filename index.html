@@ -53,6 +53,8 @@
 
             let yOffset = 10; // Y offset for PDF content
             const maxYOffset = 270; // Maximum Y offset before adding a new page (adjust as needed)
+            const pageWidth = doc.internal.pageSize.getWidth(); // Get page width
+            const imageMargin = 10; // Margin between images
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
@@ -75,18 +77,27 @@
                 yOffset += 20;
 
                 let xOffset = 10; // X offset for the first image
-                const imageHeight = 60; // Height for all images
-                const imageMargin = 10; // Margin between images
-                const maxImageWidth = 90; // Maximum width for each image to fit side by side
 
                 for (let i = 0; i < imageFiles.length; i++) {
                     const file = imageFiles[i];
                     const { width, height } = await getImageDimensions(file);
                     const aspectRatio = width / height;
-                    const imgHeight = imageHeight;
-                    const imgWidth = Math.min(maxImageWidth, imgHeight * aspectRatio);
+                    const maxWidth = (pageWidth - 40) / 2; // Maximum width for each image to fit side by side
+                    const maxHeight = 60; // Maximum height for images
 
-                    if (xOffset + imgWidth > 200) {
+                    let imgWidth, imgHeight;
+
+                    if (aspectRatio > 1) {
+                        // Landscape
+                        imgWidth = maxWidth;
+                        imgHeight = imgWidth / aspectRatio;
+                    } else {
+                        // Portrait
+                        imgHeight = maxHeight;
+                        imgWidth = imgHeight * aspectRatio;
+                    }
+
+                    if (xOffset + imgWidth > pageWidth - 10) {
                         xOffset = 10;
                         yOffset += imgHeight + imageMargin;
                     }
@@ -102,7 +113,7 @@
                     xOffset += imgWidth + imageMargin;
                 }
 
-                yOffset += imageHeight + 20; // Adjust yOffset to account for image height and add space between entries
+                yOffset += 20; // Adjust yOffset to add space between entries
             }
 
             doc.save('document.pdf');
