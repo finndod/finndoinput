@@ -19,7 +19,7 @@
                 <textarea name="description" required placeholder="Navn, adresse, hvor mange doer, kvalitet"></textarea><br><br>
 
                 <label for="image">Bilder:</label>
-                <input type="file" name="image" accept="image/*" required><br><br>
+                <input type="file" name="image" accept="image/*" multiple required><br><br>
             </div>
         </div>
         <button type="button" onclick="addEntry()">LEGG TIL FLERE DOER</button><br><br>
@@ -38,7 +38,7 @@
                 <textarea name="description" required placeholder="Navn, adresse, hvor mange doer, kvalitet"></textarea><br><br>
 
                 <label for="image">Bilder:</label>
-                <input type="file" name="image" accept="image/*" required><br><br>
+                <input type="file" name="image" accept="image/*" multiple required><br><br>
             `;
             document.getElementById('entries').appendChild(entry);
         }
@@ -60,15 +60,15 @@
                 const swappedCoordinates = `[${lon}, ${lat}]`;
 
                 const description = entry.querySelector('textarea[name="description"]').value;
-                const imageFile = entry.querySelector('input[name="image"]').files[0];
+                const imageFiles = entry.querySelector('input[name="image"]').files;
 
                 doc.text(`Coordinates: ${swappedCoordinates}`, 10, yOffset);
                 yOffset += 10;
                 doc.text(`Description: ${description}`, 10, yOffset);
                 yOffset += 20;
 
-                if (imageFile) {
-                    const imageDataUrl = await readFileAsDataURL(imageFile);
+                for (let file of imageFiles) {
+                    const imageDataUrl = await readFileAsDataURL(file);
                     doc.addImage(imageDataUrl, 'JPEG', 10, yOffset, 50, 50);
                     yOffset += 60; // Adjust yOffset to account for image height
                 }
