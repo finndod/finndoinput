@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
 </head>
 <body>
     <h1>Dofinner</h1>
@@ -57,7 +56,7 @@
             const pageWidth = doc.internal.pageSize.getWidth(); // Get page width
             const imageMargin = 10; // Margin between images
             const maxImageHeight = 60; // Maximum height for images
-            const maxImageWidth = (pageWidth - 50) / 3; // Maximum width for each image to fit three images per line
+            const availableWidth = pageWidth - 20; // Available width on the page (considering margins)
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
@@ -80,49 +79,35 @@
                 yOffset += 20;
 
                 let xOffset = 10; // X offset for the first image
-                let imagesInLine = 0; // Counter for images in the current line
 
                 for (let i = 0; i < imageFiles.length; i++) {
                     const file = imageFiles[i];
-                    const imgDataUrl = await readFileAsDataURL(file);
-                    const img = await loadImage(imgDataUrl);
+                    const { width, height } = await getImageDimensions(file);
+                    const aspectRatio = width / height;
 
-                    const aspectRatio = img.width / img.height;
-                    let imgWidth, imgHeight;
+                    let imgWidth = maxImageHeight * aspectRatio;
+                    let imgHeight = maxImageHeight;
 
-                    if (aspectRatio > 1) {
-                        // Landscape
-                        imgWidth = Math.min(maxImageWidth, availableWidth / 3);
+                    // Ensure images fit within the available page width
+                    if (imgWidth > availableWidth / 2) {
+                        imgWidth = availableWidth / 2;
                         imgHeight = imgWidth / aspectRatio;
-                    } else {
-                        // Portrait
-                        imgHeight = maxImageHeight;
-                        imgWidth = imgHeight * aspectRatio;
                     }
 
-                    if (xOffset + imgWidth > pageWidth - 10) {
+                    if (xOffset + imgWidth > availableWidth) {
                         xOffset = 10;
                         yOffset += imgHeight + imageMargin;
-                        imagesInLine = 0;
                     }
 
                     if (yOffset + imgHeight > maxYOffset) {
                         doc.addPage();
                         yOffset = 10;
                         xOffset = 10;
-                        imagesInLine = 0;
                     }
 
-                    doc.addImage(imgDataUrl, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
+                    doc.addImage(await readFileAsDataURL(file), 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
 
                     xOffset += imgWidth + imageMargin;
-                    imagesInLine++;
-
-                    if (imagesInLine === 3) {
-                        xOffset = 10;
-                        yOffset += imgHeight + imageMargin;
-                        imagesInLine = 0;
-                    }
                 }
 
                 yOffset += maxImageHeight + 20; // Adjust yOffset to add space between entries
@@ -140,12 +125,12 @@
             });
         }
 
-        function loadImage(url) {
+        function getImageDimensions(file) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                img.onload = () => resolve(img);
+                img.onload = () => resolve({ width: img.width, height: img.height });
                 img.onerror = reject;
-                img.src = url;
+                img.src = URL.createObjectURL(file);
             });
         }
     </script>
