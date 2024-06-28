@@ -52,6 +52,7 @@
             const entries = document.getElementsByClassName('entry');
 
             let yOffset = 10; // Y offset for PDF content
+            const maxYOffset = 270; // Maximum Y offset before adding a new page (adjust as needed)
 
             for (let entry of entries) {
                 const coordinates = entry.querySelector('input[name="coordinates"]').value;
@@ -62,15 +63,36 @@
                 const description = entry.querySelector('textarea[name="description"]').value;
                 const imageFiles = entry.querySelector('input[name="image"]').files;
 
+                if (yOffset + 20 > maxYOffset) {
+                    doc.addPage();
+                    yOffset = 10;
+                }
+                
                 doc.text(`Coordinates: ${swappedCoordinates}`, 10, yOffset);
                 yOffset += 10;
+                
                 doc.text(`Description: ${description}`, 10, yOffset);
                 yOffset += 20;
 
-                for (let file of imageFiles) {
+                let xOffset = 10; // X offset for the first image
+
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const file = imageFiles[i];
                     const imageDataUrl = await readFileAsDataURL(file);
-                    doc.addImage(imageDataUrl, 'JPEG', 10, yOffset, 50, 50);
-                    yOffset += 60; // Adjust yOffset to account for image height
+                    if (yOffset + 60 > maxYOffset) {
+                        doc.addPage();
+                        yOffset = 10;
+                        xOffset = 10;
+                    }
+                    doc.addImage(imageDataUrl, 'JPEG', xOffset, yOffset, 50, 50);
+                    
+                    // Update xOffset for the next image, or reset it and update yOffset if it was the second image
+                    if (xOffset === 10) {
+                        xOffset = 70; // Next image goes to the right
+                    } else {
+                        xOffset = 10; // Reset to the left
+                        yOffset += 60; // Move down for the next row of images
+                    }
                 }
 
                 yOffset += 20; // Add space between entries
